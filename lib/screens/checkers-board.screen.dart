@@ -2,9 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../widgets/checkers-board.widget.dart'; // Child widget below
-import '../services/game.service.dart'; // Hypothetical service
-import '../providers/player.provider.dart'; // For playerId
+import '../widgets/checkers-board.widget.dart';
+import '../services/game.service.dart';
+import '../providers/player.provider.dart';
 
 class CheckersBoardScreen extends StatefulWidget {
   final int gameId;
@@ -25,15 +25,13 @@ class _CheckersBoardScreenState extends State<CheckersBoardScreen> {
   String? _error;
   Timer? _pollTimer;
 
-  // Data from server
   String? _player1Id;
   String? _player2Id;
-  String? _status; // null | "Completed" | "Draw"
-  int? _winner; // null | 1 | 2
+  String? _status;
+  int? _winner;
   bool _isMyTurn = false;
   List<Map<String, dynamic>> _moves = [];
 
-  // My color locally
   String _myColor = 'R';
 
   @override
@@ -79,7 +77,6 @@ class _CheckersBoardScreenState extends State<CheckersBoardScreen> {
       final movesList = data['moves'] as List<dynamic>? ?? [];
       _moves = movesList.map((m) => m as Map<String, dynamic>).toList();
 
-      // Determine my color
       if (playerId == _player1Id) {
         _myColor = 'R';
       } else {
@@ -93,14 +90,12 @@ class _CheckersBoardScreenState extends State<CheckersBoardScreen> {
     if (playerId.isEmpty) return;
     final success = await GameService.forfeitGame(widget.gameId, playerId);
     if (success) {
-      _goHome(); // End the game flow
+      _goHome();
     } else {
       setState(() => _error = 'Failed to forfeit game.');
     }
   }
 
-  /// Called when local user attempts a move
-  /// If the server disagrees, next poll will fix our board state
   Future<void> _onMove(String moveDesc) async {
     if (!_isMyTurn) {
       setState(() => _error = 'Not your turn.');
@@ -110,7 +105,6 @@ class _CheckersBoardScreenState extends State<CheckersBoardScreen> {
     final playerId = context.read<PlayerProvider>().player?.id ?? '';
     if (playerId.isEmpty) return;
 
-    // Example: "from=(2,3)|to=(3,4)"
     try {
       final parts = moveDesc.split('|');
       final fromStr = parts[0].replaceAll(RegExp(r'[^0-9,]'), '');
@@ -126,7 +120,6 @@ class _CheckersBoardScreenState extends State<CheckersBoardScreen> {
         setState(
             () => _error = 'Server move refused. Will revert on next poll.');
       } else {
-        // Force immediate poll if success
         _pollGame();
       }
     } catch (e) {
@@ -134,24 +127,16 @@ class _CheckersBoardScreenState extends State<CheckersBoardScreen> {
     }
   }
 
-  /// If game ends or user clicks "Go Home," we want to reset everything.
-  /// Then we pop back to a screen that eventually leads to matchmaking next time they click "Play."
   void _goHome() {
-    // 1) Cancel polling
     _pollTimer?.cancel();
 
-    // 2) Possibly reset some global state if needed
-    // context.read<SomeGlobalGameState>().reset();
     _player1Id = null;
     _player2Id = null;
     _status = null;
     _winner = null;
     _moves = [];
 
-    // 3) Pop back to the home screen or root
-    //    so next time they click "Play," they see the matchmaking screen
     Navigator.of(context).popUntil((route) => route.isFirst);
-    // Or you could do pushAndRemoveUntil if your home is not the first route
   }
 
   @override
@@ -163,7 +148,6 @@ class _CheckersBoardScreenState extends State<CheckersBoardScreen> {
       );
     }
 
-    // Check if game ended
     if (_status == 'Completed') {
       String winnerStr = 'Unknown winner';
       if (_winner == 1) {
@@ -176,7 +160,6 @@ class _CheckersBoardScreenState extends State<CheckersBoardScreen> {
       return _buildEndScreen('Game Draw', 'Nobody wins.');
     }
 
-    // Otherwise ongoing
     final opponentId = context.read<PlayerProvider>().player?.id == _player1Id
         ? _player2Id
         : _player1Id;
@@ -193,10 +176,10 @@ class _CheckersBoardScreenState extends State<CheckersBoardScreen> {
           Text(_isMyTurn ? 'Your turn!' : 'Waiting on opponent...'),
           Expanded(
             child: CheckersBoard(
-              color: _myColor, // 'R' or 'B'
+              color: _myColor,
               canMove: _isMyTurn,
-              moves: _moves, // from server
-              onMove: _onMove, // local => server call
+              moves: _moves,
+              onMove: _onMove,
             ),
           ),
           ElevatedButton(

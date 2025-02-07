@@ -11,7 +11,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 1; // Make Game = index 1 so it’s the default
+  int _currentIndex = 1;
 
   final List<Widget> _screens = const [
     ReplaysScreen(),

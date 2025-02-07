@@ -7,7 +7,6 @@ class StatsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // In a real app, you'd retrieve this from a service or database
     final playerProvider = context.watch<PlayerProvider>();
     final player = playerProvider.player;
 

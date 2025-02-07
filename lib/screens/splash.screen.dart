@@ -1,11 +1,10 @@
-// lib/screens/splash_screen.dart
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 
 import '../services/player.service.dart';
 import '../providers/player.provider.dart';
-import 'home.screen.dart'; // Your main screen
+import 'home.screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -28,7 +27,6 @@ class _SplashScreenState extends State<SplashScreen> {
       final prefs = await SharedPreferences.getInstance();
       String? playerId = prefs.getString('playerId');
 
-      // 1. If no ID in local storage, register to get a new one
       if (playerId == null) {
         final newId = await PlayerService.register();
         if (newId == null) {
@@ -41,7 +39,6 @@ class _SplashScreenState extends State<SplashScreen> {
         await prefs.setString('playerId', playerId);
       }
 
-      // 2. With a valid ID, fetch the profile
       final playerModel = await PlayerService.getProfile(playerId);
       if (playerModel == null) {
         setState(() {
@@ -50,11 +47,9 @@ class _SplashScreenState extends State<SplashScreen> {
         return;
       }
 
-      // 3. Store in PlayerProvider
       if (!mounted) return;
       context.read<PlayerProvider>().setPlayer(playerModel);
 
-      // 4. Navigate to the main game screen
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const HomeScreen()),
@@ -69,7 +64,6 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     if (error != null) {
-      // Show error message
       return Scaffold(
         body: Center(
           child: Text(
@@ -80,7 +74,6 @@ class _SplashScreenState extends State<SplashScreen> {
       );
     }
 
-    // Otherwise show a simple loading indicator
     return const Scaffold(
       body: Center(
         child: CircularProgressIndicator(),

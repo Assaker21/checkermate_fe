@@ -6,9 +6,8 @@ class GameScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Example: We show current score and current win streak
     final int currentWinStreak = 3;
-    final String score = "667"; // example
+    final String score = "667";
 
     return Scaffold(
       appBar: AppBar(
@@ -25,7 +24,6 @@ class GameScreen extends StatelessWidget {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {
-                // Navigate to matchmaking screen
                 Navigator.push(
                   context,
                   MaterialPageRoute(

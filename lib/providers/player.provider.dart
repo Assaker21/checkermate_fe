@@ -1,5 +1,3 @@
-// lib/providers/player_provider.dart
-
 import 'package:flutter/material.dart';
 import '../models/player.model.dart';
 

@@ -1,4 +1,3 @@
-// lib/services/player_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/player.model.dart';
@@ -6,7 +5,6 @@ import '../models/player.model.dart';
 class PlayerService {
   static const baseUrl = 'https://checkermateapi.onrender.com';
 
-  /// Calls GET /register to obtain a new player ID
   static Future<String?> register() async {
     try {
       final uri = Uri.parse('$baseUrl/register');
@@ -22,7 +20,6 @@ class PlayerService {
     }
   }
 
-  /// Calls GET /profile with Authorization header, returns a PlayerModel
   static Future<PlayerModel?> getProfile(String playerId) async {
     try {
       final uri = Uri.parse('$baseUrl/profile');

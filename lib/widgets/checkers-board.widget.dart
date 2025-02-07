@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// A single local move/capture data structure
 class MoveData {
   final int fromRow;
   final int fromCol;
@@ -21,12 +20,11 @@ class MoveData {
   });
 }
 
-/// Our local checkers board widget
 class CheckersBoard extends StatefulWidget {
-  final String color; // 'R' or 'B'
-  final bool canMove; // is it this player's turn?
-  final List<Map<String, dynamic>> moves; // from server
-  final Function(String) onMove; // callback to parent for server call
+  final String color;
+  final bool canMove;
+  final List<Map<String, dynamic>> moves;
+  final Function(String) onMove;
 
   const CheckersBoard({
     super.key,
@@ -46,10 +44,8 @@ class _CheckersBoardState extends State<CheckersBoard> {
   int? _selRow;
   int? _selCol;
 
-  // If multiple captures in local logic
   bool _multiCapture = false;
 
-  // squares we highlight as possible moves
   List<List<bool>> _available =
       List.generate(8, (_) => List.generate(8, (_) => false));
 
@@ -69,7 +65,6 @@ class _CheckersBoardState extends State<CheckersBoard> {
 
       _buildLocalBoardFromServer();
 
-      // if the piece is still there, keep selection
       if (wasSelected && oldRow != null && oldCol != null) {
         final piece = _localBoard[oldRow][oldCol];
         if (piece.isNotEmpty && piece.startsWith(widget.color)) {
@@ -83,12 +78,9 @@ class _CheckersBoardState extends State<CheckersBoard> {
     }
   }
 
-  /// Rebuild the local board from standard layout + server's official moves
   void _buildLocalBoardFromServer() {
-    // 1) empty board
     _localBoard = List.generate(8, (_) => List.generate(8, (_) => ''));
 
-    // 2) initial arrangement
     for (int r = 0; r < 3; r++) {
       for (int c = 0; c < 8; c++) {
         if ((r + c) % 2 == 0) {
@@ -104,7 +96,6 @@ class _CheckersBoardState extends State<CheckersBoard> {
       }
     }
 
-    // 3) apply moves from the server
     for (final m in widget.moves) {
       final fromArr = (m['from'] as String).split(',');
       final toArr = (m['to'] as String).split(',');
@@ -114,13 +105,6 @@ class _CheckersBoardState extends State<CheckersBoard> {
       final fc = int.tryParse(fromArr[1]) ?? 0;
       final tr = int.tryParse(toArr[0]) ?? 0;
       final tc = int.tryParse(toArr[1]) ?? 0;
-
-      /*// If there's a captured piece
-      if (m['capRow'] != null && m['capCol'] != null) {
-        final cr = m['capRow'] as int;
-        final cc = m['capCol'] as int;
-        _localBoard[cr][cc] = '';
-      }*/
 
       if ((fr + tr) % 2 == 0 && (fc + tc) % 2 == 0) {
         int jumpedOverR = int.parse("${(fr + tr) / 2}");
@@ -135,7 +119,6 @@ class _CheckersBoardState extends State<CheckersBoard> {
       _localBoard[fr][fc] = '';
       _localBoard[tr][tc] = piece;
 
-      // Possibly king
       if (piece == 'R' && tr == 0) {
         _localBoard[tr][tc] = 'RK';
       } else if (piece == 'B' && tr == 7) {
@@ -198,12 +181,10 @@ class _CheckersBoardState extends State<CheckersBoard> {
   }
 
   void _onTapCell(int row, int col) {
-    if (!widget.canMove) return; // not my turn
+    if (!widget.canMove) return;
     final tappedPiece = _localBoard[row][col];
 
-    // If no selection yet
     if (_selRow == null && _selCol == null) {
-      // must tap my color
       if (tappedPiece.isNotEmpty && tappedPiece.startsWith(widget.color)) {
         setState(() {
           _selRow = row;
@@ -215,11 +196,9 @@ class _CheckersBoardState extends State<CheckersBoard> {
       return;
     }
 
-    // If a piece is selected, see if user tapped a valid move
     if (_available[row][col]) {
       _doLocalMove(_selRow!, _selCol!, row, col);
     } else {
-      // maybe re-select another piece of my color
       if (tappedPiece.isNotEmpty && tappedPiece.startsWith(widget.color)) {
         setState(() {
           _selRow = row;
@@ -228,14 +207,11 @@ class _CheckersBoardState extends State<CheckersBoard> {
         });
         _calcMovesForSelected();
       } else {
-        // invalid => clear
         setState(() => _clearSelection());
       }
     }
   }
 
-  /// Perform the local move (remove captured pieces, do kinging).
-  /// Then call widget.onMove(...) so parent can do server request.
   void _doLocalMove(int fr, int fc, int tr, int tc) {
     final piece = _localBoard[fr][fc];
     final theMove = _findLocalMove(fr, fc, tr, tc);
@@ -246,29 +222,23 @@ class _CheckersBoardState extends State<CheckersBoard> {
       cc = theMove.capCol;
     }
 
-    // Remove captured piece
     if (cr != null && cc != null) {
       _localBoard[cr][cc] = '';
     }
 
-    // Move the piece
     _localBoard[fr][fc] = '';
     _localBoard[tr][tc] = piece;
 
-    // Possibly king
     if (piece == 'R' && tr == 0) {
       _localBoard[tr][tc] = 'RK';
     } else if (piece == 'B' && tr == 7) {
       _localBoard[tr][tc] = 'BK';
     }
 
-    // Construct the move string
     final moveStr = 'from=($fr,$fc)|to=($tr,$tc)';
     widget.onMove(moveStr);
 
     setState(() {
-      // If multi-capture is possible, you might keep the piece selected
-      // and recalc. We'll do a simple approach => always clear.
       _clearSelection();
     });
   }
@@ -288,11 +258,9 @@ class _CheckersBoardState extends State<CheckersBoard> {
     final piece = _localBoard[sr][sc];
     if (piece.isEmpty || !piece.startsWith(widget.color)) return;
 
-    // All moves for my color => forced capture check
     final all = _getAllMovesForColor(widget.color);
     final forcedCapture = all.any((m) => m.isCapture);
 
-    // Moves for the selected piece
     final pieceMoves = _getMovesForPiece(sr, sc);
     final filtered = forcedCapture
         ? pieceMoves.where((m) => m.isCapture).toList()
@@ -318,7 +286,6 @@ class _CheckersBoardState extends State<CheckersBoard> {
     return result;
   }
 
-  /// Local checkers logic: forced captures, normal moves, king moves
   List<MoveData> _getMovesForPiece(int row, int col) {
     final piece = _localBoard[row][col];
     if (piece.isEmpty) return [];
@@ -344,7 +311,6 @@ class _CheckersBoardState extends State<CheckersBoard> {
 
     final result = <MoveData>[];
 
-    // Normal
     for (var d in directions) {
       final nr = row + d[0];
       final nc = col + d[1];
@@ -357,7 +323,6 @@ class _CheckersBoardState extends State<CheckersBoard> {
         ));
       }
     }
-    // Captures
     for (var d in directions) {
       final cr = row + d[0];
       final cc = col + d[1];
@@ -383,14 +348,12 @@ class _CheckersBoardState extends State<CheckersBoard> {
     return result;
   }
 
-  /// Find the local MoveData if it matches from->to
   MoveData? _findLocalMove(int fr, int fc, int tr, int tc) {
     final moves = _getMovesForPiece(fr, fc);
     return moves.firstWhere(
       (m) =>
           m.fromRow == fr && m.fromCol == fc && m.toRow == tr && m.toCol == tc,
-      orElse: () =>
-          MoveData(fromRow: fr, fromCol: fc, toRow: tr, toCol: tc), // fallback
+      orElse: () => MoveData(fromRow: fr, fromCol: fc, toRow: tr, toCol: tc),
     );
   }
 

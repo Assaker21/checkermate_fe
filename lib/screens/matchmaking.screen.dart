@@ -4,7 +4,7 @@ import 'dart:async';
 import 'checkers-board.screen.dart';
 import '../services/matchmaking.service.dart';
 import 'package:provider/provider.dart';
-import '../providers/player.provider.dart'; // The provider with player info
+import '../providers/player.provider.dart';
 
 class MatchmakingScreen extends StatefulWidget {
   const MatchmakingScreen({super.key});
@@ -24,7 +24,6 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> {
   void initState() {
     super.initState();
 
-    // Grab the player ID from the provider
     final player = context.read<PlayerProvider>().player;
     playerId = player?.id ?? '';
 
@@ -33,7 +32,6 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> {
 
   @override
   void dispose() {
-    // If you want to remove player from queue whenever they leave this screen:
     if (playerId.isNotEmpty) {
       MatchmakingService.deleteMatchmake(playerId);
     }
@@ -56,7 +54,6 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> {
       return;
     }
 
-    // Check if we have a game already
     if (getResponse['gameId'] != null) {
       _goToGameScreen(getResponse['gameId']);
       return;
@@ -64,17 +61,14 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> {
 
     final message = getResponse['message'];
     if (message == 'Waiting') {
-      // Already in queue
       setState(() {
         _isLoading = false;
         _statusMessage = 'In queue, waiting for match...';
       });
       _startPolling();
     } else if (message == 'Not in queue') {
-      // Need to call POST /matchmake
       await _handlePostMatchmake();
     } else {
-      // Unexpected response
       setState(() {
         _isLoading = false;
         _statusMessage = 'Unexpected response: $message';
@@ -103,8 +97,6 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> {
     final message = postResponse['message'];
 
     if (message == 'Running') {
-      // Already in a game
-      // We should call GET /matchmake again to get the gameId
       final checkGame = await MatchmakingService.getMatchmake(playerId);
       if (checkGame != null && checkGame['gameId'] != null) {
         _goToGameScreen(checkGame['gameId']);
@@ -124,19 +116,17 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> {
       });
       _startPolling();
     } else {
-      // Unexpected response
       setState(() {
         _statusMessage = 'Unexpected response: $message';
       });
     }
   }
 
-  // Poll the GET /matchmake endpoint every 2 seconds to see if a game was found
   void _startPolling() {
     _pollTimer?.cancel();
     _pollTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
       final resp = await MatchmakingService.getMatchmake(playerId);
-      if (resp == null) return; // ignore errors
+      if (resp == null) return;
 
       if (resp['gameId'] != null) {
         _pollTimer?.cancel();
@@ -146,7 +136,6 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> {
           _statusMessage = 'Still waiting for a match...';
         });
       } else {
-        // Possibly the server says "Not in queue"?
         setState(() {
           _statusMessage = 'No longer in queue. Unexpected?';
         });

@@ -7,7 +7,6 @@ class ReplaysScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Dummy data for demonstration
     final List<ReplayModel> replays = [
       ReplayModel(
           date: DateTime.now().subtract(const Duration(days: 1)),

@@ -1,5 +1,3 @@
-// lib/models/player_model.dart
-
 class PlayerModel {
   final String id;
   final PlayerStats stats;
@@ -9,8 +7,6 @@ class PlayerModel {
     required this.stats,
   });
 
-  // A factory constructor to parse from JSON.
-  // Adjust field names to match your backend's response structure.
   factory PlayerModel.fromJson(Map<String, dynamic> json) {
     return PlayerModel(
       id: json['id'] as String,
